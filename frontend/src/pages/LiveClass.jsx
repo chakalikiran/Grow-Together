@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useEffect, useRef, useContext, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ZegoUIKitPrebuilt } from '@zegocloud/zego-uikit-prebuilt';
 import { io } from 'socket.io-client';
@@ -25,7 +25,12 @@ const LiveClass = () => {
   const socketRef = useRef(null);
 
   const userName = user?.name || 'Guest';
-  const userId = user?._id || String(Math.floor(Math.random() * 100000));
+  // Memoize userId so it never changes across re-renders → prevents Zego from reinitializing
+  const userId = useMemo(
+    () => user?._id || String(Math.floor(Math.random() * 100000)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [] // intentionally empty: compute once on mount
+  );
 
   // ─── Socket.IO chat ────────────────────────────────────────────────
   useEffect(() => {

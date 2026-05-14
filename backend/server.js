@@ -51,9 +51,9 @@ io.on('connection', (socket) => {
     socket.to(roomId).emit('user-joined', { userName });
   });
 
-  // Broadcast a chat message to the room
+  // Broadcast a chat message to the room (exclude sender — they already have it optimistically)
   socket.on('chat-message', ({ roomId, text, sender, timestamp }) => {
-    io.to(roomId).emit('chat-message', { sender, text, timestamp });
+    socket.to(roomId).emit('chat-message', { sender, text, timestamp });
   });
 
   // Leave room
