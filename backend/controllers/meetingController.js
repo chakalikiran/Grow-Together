@@ -58,8 +58,8 @@ exports.joinMeeting = async (req, res) => {
 // @access  Private
 exports.agoraToken = async (req, res) => {
   try {
-    const appID = '9cf768199e38436495196c52c403d889';
-    const appCertificate = '79411d8d98de4d89b2343175e0118e42';
+    const appID = process.env.AGORA_APP_ID || '9cf768199e38436495196c52c403d889';
+    const appCertificate = process.env.AGORA_APP_CERTIFICATE || '79411d8d98de4d89b2343175e0118e42';
     const channelName = req.params.roomId;
     
     const role = RtcRole.PUBLISHER;

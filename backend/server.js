@@ -1,4 +1,6 @@
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
@@ -25,6 +27,49 @@ connectDB().then(async () => {
 });
 
 const app = express();
+const httpServer = http.createServer(app);
+
+// Socket.IO setup with CORS
+const io = new Server(httpServer, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST'],
+  },
+});
+
+// Real-time chat namespace
+io.on('connection', (socket) => {
+  console.log(`Socket connected: ${socket.id}`);
+
+  // Join a meeting room
+  socket.on('join-room', ({ roomId, userName }) => {
+    socket.join(roomId);
+    socket.data.userName = userName;
+    socket.data.roomId = roomId;
+    console.log(`${userName} joined room: ${roomId}`);
+    // Notify others in room
+    socket.to(roomId).emit('user-joined', { userName });
+  });
+
+  // Broadcast a chat message to the room
+  socket.on('chat-message', ({ roomId, text, sender, timestamp }) => {
+    io.to(roomId).emit('chat-message', { sender, text, timestamp });
+  });
+
+  // Leave room
+  socket.on('leave-room', ({ roomId, userName }) => {
+    socket.leave(roomId);
+    socket.to(roomId).emit('user-left', { userName });
+  });
+
+  socket.on('disconnect', () => {
+    const { userName, roomId } = socket.data;
+    if (roomId && userName) {
+      socket.to(roomId).emit('user-left', { userName });
+    }
+    console.log(`Socket disconnected: ${socket.id}`);
+  });
+});
 
 // Middleware
 app.use(cors());
@@ -34,7 +79,7 @@ app.use(express.urlencoded({ extended: true }));
 // Optional: Make uploads folder static for general file access
 app.use('/uploads', express.static('uploads'));
 
-// Routes (to be added)
+// Routes
 app.get('/api/health', (req, res) => {
   res.status(200).json({ success: true, message: 'API is running smoothly.' });
 });
@@ -57,6 +102,6 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });
