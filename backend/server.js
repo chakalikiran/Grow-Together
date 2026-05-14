@@ -56,6 +56,11 @@ io.on('connection', (socket) => {
     socket.to(roomId).emit('chat-message', { sender, text, timestamp });
   });
 
+  // End meeting (for all users)
+  socket.on('end-meeting', ({ roomId }) => {
+    io.to(roomId).emit('meeting-ended');
+  });
+
   // Leave room
   socket.on('leave-room', ({ roomId, userName }) => {
     socket.leave(roomId);

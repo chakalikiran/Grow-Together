@@ -10,7 +10,19 @@ import Doubts from './pages/Doubts';
 import LiveClass from './pages/LiveClass';
 
 const PrivateRoute = ({ children }) => {
-  const { user } = useContext(AuthContext);
+  const { user, loading } = useContext(AuthContext);
+  
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
+          <p className="text-slate-500 font-medium animate-pulse">Initializing Session...</p>
+        </div>
+      </div>
+    );
+  }
+  
   return user ? children : <Navigate to="/" />;
 };
 
