@@ -227,9 +227,14 @@ const Dashboard = () => {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Link to={`/meeting/${m.roomId}`} className="px-6 py-2.5 bg-emerald-100 hover:bg-emerald-500 hover:text-white text-emerald-700 font-bold rounded-xl transition transform hover:scale-105 active:scale-95 shadow-sm whitespace-nowrap">
-                      Join Live Space
-                    </Link>
+                    <a 
+                      href="https://meet.google.com/ypd-rumq-xgj" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl transition transform hover:scale-105 active:scale-95 shadow-lg shadow-emerald-500/20 whitespace-nowrap flex items-center gap-2"
+                    >
+                      <Video size={18} /> Join Google Meet
+                    </a>
                     {user?.role === 'mentor' && (
                       <div className="relative overflow-hidden">
                           <input type="file" onChange={(e) => handleUploadRecording(e, m._id)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="video/*" />
