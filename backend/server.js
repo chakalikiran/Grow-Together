@@ -1,6 +1,4 @@
 const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
@@ -11,9 +9,13 @@ dotenv.config();
 // Connect to Database
 connectDB().then(async () => {
   const User = require('./models/User');
+  const Assignment = require('./models/Assignment');
   try {
-    if (!(await User.findOne({ email: 'mentor@example.com' }))) {
-      await User.create({
+    // 1. Seed Users
+    let mentor = await User.findOne({ email: 'mentor@example.com' });
+    if (!mentor) {
+      mentor = await User.create({
+        _id: '65f8a2e4b8a1c92d5e3f4a02',
         name: 'Senior Mentor',
         email: 'mentor@example.com',
         password: 'password123',
@@ -21,60 +23,53 @@ connectDB().then(async () => {
       });
       console.log('Test Mentor user seeded: mentor@example.com / password123');
     }
+
+    let student = await User.findOne({ email: 'student@example.com' });
+    if (!student) {
+      student = await User.create({
+        _id: '65f8a2e4b8a1c92d5e3f4a01',
+        name: 'Demo Student',
+        email: 'student@example.com',
+        password: 'password123',
+        role: 'student'
+      });
+      console.log('Test Student user seeded: student@example.com / password123');
+    }
+
+    // 2. Seed Dummy Sprint
+    if (!(await Assignment.findOne({ title: 'Advanced Nordic Aesthetics' }))) {
+      const sprint = await Assignment.create({
+        title: 'Advanced Nordic Aesthetics',
+        description: 'A deep dive into zero-blue color theory, tactile bento layouts, and spacious UI engineering. This sprint focuses on creating high-depth interfaces using the Nordic Autumn palette.',
+        deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+        mentor: mentor._id,
+        feed: [
+          {
+            user: mentor._id,
+            text: 'Welcome to the new Sprint! Please review the brief and post any questions or insights here.',
+            createdAt: new Date()
+          },
+          {
+            user: student._id,
+            text: 'This layout feels incredibly spacious. I have some doubts about the shadow depth on mobile.',
+            isDoubt: true,
+            createdAt: new Date(Date.now() + 1000)
+          },
+          {
+            user: mentor._id,
+            text: 'Great start! For the shadows, try using a hint of warm tint in the rgba value to match the bone background.',
+            createdAt: new Date(Date.now() + 2000)
+          }
+        ]
+      });
+      console.log('Dummy Sprint and Conversation seeded for layout testing.');
+    }
   } catch (e) {
     console.log('Seed skip:', e.message);
   }
 });
 
 const app = express();
-const httpServer = http.createServer(app);
-
-// Socket.IO setup with CORS
-const io = new Server(httpServer, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST'],
-  },
-});
-
-// Real-time chat namespace
-io.on('connection', (socket) => {
-  console.log(`Socket connected: ${socket.id}`);
-
-  // Join a meeting room
-  socket.on('join-room', ({ roomId, userName }) => {
-    socket.join(roomId);
-    socket.data.userName = userName;
-    socket.data.roomId = roomId;
-    console.log(`${userName} joined room: ${roomId}`);
-    // Notify others in room
-    socket.to(roomId).emit('user-joined', { userName });
-  });
-
-  // Broadcast a chat message to the room (exclude sender — they already have it optimistically)
-  socket.on('chat-message', ({ roomId, text, sender, timestamp }) => {
-    socket.to(roomId).emit('chat-message', { sender, text, timestamp });
-  });
-
-  // End meeting (for all users)
-  socket.on('end-meeting', ({ roomId }) => {
-    io.to(roomId).emit('meeting-ended');
-  });
-
-  // Leave room
-  socket.on('leave-room', ({ roomId, userName }) => {
-    socket.leave(roomId);
-    socket.to(roomId).emit('user-left', { userName });
-  });
-
-  socket.on('disconnect', () => {
-    const { userName, roomId } = socket.data;
-    if (roomId && userName) {
-      socket.to(roomId).emit('user-left', { userName });
-    }
-    console.log(`Socket disconnected: ${socket.id}`);
-  });
-});
 
 // Middleware
 app.use(cors());
@@ -90,7 +85,6 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/meetings', require('./routes/meetingRoutes'));
 app.use('/api/assignments', require('./routes/assignmentRoutes'));
 app.use('/api/notes', require('./routes/noteRoutes'));
 app.use('/api/doubts', require('./routes/doubtRoutes'));
@@ -107,6 +101,6 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-httpServer.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });

@@ -38,8 +38,20 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const bypassLoginAsStudent = () => {
+    const mockStudent = { _id: '65f8a2e4b8a1c92d5e3f4a01', name: 'Demo Student', email: 'student@demo.com', role: 'student', token: 'dummy_student_token' };
+    setUser(mockStudent);
+    localStorage.setItem('userInfo', JSON.stringify(mockStudent));
+  };
+
+  const bypassLoginAsMentor = () => {
+    const mockMentor = { _id: '65f8a2e4b8a1c92d5e3f4a02', name: 'Demo Mentor', email: 'mentor@demo.com', role: 'mentor', token: 'dummy_mentor_token' };
+    setUser(mockMentor);
+    localStorage.setItem('userInfo', JSON.stringify(mockMentor));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, bypassLoginAsStudent, bypassLoginAsMentor }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,13 +1,21 @@
 const express = require('express');
 const router = express.Router();
-const { createAssignment, getAssignments, submitAssignment } = require('../controllers/assignmentController');
+const { 
+  createAssignment, 
+  getAssignments, 
+  getAssignmentById,
+  postToFeed, 
+  toggleFeedDoubt 
+} = require('../controllers/assignmentController');
 const { protect, mentorAuth } = require('../middleware/authMiddleware');
 const upload = require('../config/cloudinary');
 
 router.route('/')
-  .post(protect, mentorAuth, upload.single('file'), createAssignment)
-  .get(protect, getAssignments);
+  .get(protect, getAssignments)
+  .post(protect, mentorAuth, upload.single('file'), createAssignment);
 
-router.post('/:id/submit', protect, upload.single('file'), submitAssignment);
+router.get('/:id', protect, getAssignmentById);
+router.post('/:id/feed', protect, upload.single('file'), postToFeed);
+router.put('/:id/feed/:messageId/doubt', protect, toggleFeedDoubt);
 
 module.exports = router;

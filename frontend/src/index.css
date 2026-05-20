@@ -1,14 +1,52 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #10b981;
-  --color-secondary: #0f172a;
+  --color-bone: #fdfcfb;
+  --color-terracotta: #9a3412;
+  --color-slate: #4b5563;
+  --color-gold: #fde68a;
+  --color-deep-charcoal: #1e293b;
+  --color-deep-brown: #422006;
 }
 
 @layer base {
   body {
-    background-color: #f8fafc;
-    color: #334155;
+    background-color: var(--color-bone, #fdfcfb);
+    color: var(--color-deep-charcoal, #1e293b);
     font-family: 'Inter', sans-serif;
+    margin: 0;
+  }
+}
+
+@layer utilities {
+  .noise-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 50;
+    opacity: 0.4;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    mix-blend-mode: overlay;
+  }
+
+  .mesh-gradient {
+    background-color: #fdfcfb;
+    background-image: 
+      radial-gradient(at 0% 0%, #ffedd5 0px, transparent 50%),
+      radial-gradient(at 100% 100%, #ecfccb 0px, transparent 50%);
+    background-size: 100% 100%;
+    animation: meshFlow 15s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes meshFlow {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 100% 100%;
   }
 }

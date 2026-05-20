@@ -6,12 +6,14 @@ const assignmentSchema = mongoose.Schema({
   deadline: { type: Date, required: true },
   mentor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   fileUrl: { type: String }, // Provided by mentor (Optional)
-  submissions: [
+  feed: [
     {
-      student: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-      submissionUrl: { type: String, required: true },
-      submittedAt: { type: Date, default: Date.now },
-      status: { type: String, enum: ['pending', 'submitted', 'graded'], default: 'submitted' }
+      user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+      text: { type: String },
+      fileUrl: { type: String },
+      linkUrl: { type: String },
+      isDoubt: { type: Boolean, default: false },
+      createdAt: { type: Date, default: Date.now }
     }
   ]
 }, {

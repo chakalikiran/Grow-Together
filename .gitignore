@@ -25,6 +25,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# MongoDB Memory Server cache
+.mongo-data/
+
 # System Files
 .DS_Store
 Thumbs.db

@@ -1,76 +1,53 @@
-import React, { useState, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { LogIn } from 'lucide-react';
+import { LogIn, BookOpen, User } from 'lucide-react';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const { login } = useContext(AuthContext);
+  const { bypassLoginAsStudent, bypassLoginAsMentor } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await login(email, password);
-      navigate('/dashboard');
-    } catch (err) {
-      setError('Invalid credentials or server error.');
-    }
+  const handleStudentLogin = () => {
+    bypassLoginAsStudent();
+    navigate('/dashboard');
+  };
+
+  const handleMentorLogin = () => {
+    bypassLoginAsMentor();
+    navigate('/dashboard');
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen relative w-full bg-slate-100 overflow-hidden">
-      {/* Aesthetic blob backgrounds */}
-      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-emerald-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
-      <div className="absolute top-[20%] right-[-10%] w-96 h-96 bg-cyan-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
-      <div className="absolute bottom-[-10%] left-[20%] w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-4000"></div>
+    <div className="flex items-center justify-center min-h-screen relative w-full overflow-hidden mesh-gradient">
+      <div className="noise-overlay"></div>
+      {/* Aesthetic blob backgrounds - Updated to Nordic Autumn */}
+      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-gold/50 rounded-full mix-blend-multiply filter blur-[100px] opacity-70 animate-blob"></div>
+      <div className="absolute top-[20%] right-[-10%] w-96 h-96 bg-terracotta/20 rounded-full mix-blend-multiply filter blur-[100px] opacity-70 animate-blob animation-delay-2000"></div>
+      <div className="absolute bottom-[-10%] left-[20%] w-96 h-96 bg-orange-200/50 rounded-full mix-blend-multiply filter blur-[100px] opacity-70 animate-blob animation-delay-4000"></div>
 
-      <div className="w-full max-w-md bg-white/80 backdrop-blur-xl p-8 rounded-2xl shadow-xl z-10 border border-white/40">
+      <div className="w-full max-w-md bg-white/80 backdrop-blur-2xl p-8 rounded-[2rem] shadow-warm z-10 border border-terracotta/10 relative">
         <div className="flex justify-center mb-6">
-          <div className="h-16 w-16 bg-emerald-500 text-white flex items-center justify-center rounded-2xl shadow-lg shadow-emerald-500/30">
-            <LogIn size={32} />
+          <div className="h-16 w-16 bg-bone text-terracotta flex items-center justify-center rounded-2xl shadow-warm-sm border border-terracotta/10">
+            <LogIn size={32} strokeWidth={1.5} />
           </div>
         </div>
-        <h2 className="text-3xl font-bold text-center text-slate-800 mb-2">Grow Together</h2>
-        <p className="text-center text-slate-500 mb-8">Sign in to your learning dashboard</p>
+        <h2 className="text-3xl font-bold text-center text-slate mb-2 tracking-tight">Grow Together</h2>
+        <p className="text-center text-slate/70 mb-8">Choose your role to enter the portal</p>
 
-        {error && <div className="p-3 mb-6 bg-red-100 text-red-700 rounded-lg text-sm text-center">{error}</div>}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Email Address</label>
-            <input 
-              type="email" 
-              required
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition bg-white/50"
-              placeholder="mentor@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Password</label>
-            <input 
-              type="password" 
-              required
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition bg-white/50"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
+        <div className="space-y-4">
           <button 
-            type="submit" 
-            className="w-full py-3 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-medium rounded-xl shadow-lg shadow-emerald-500/30 transform transition hover:-translate-y-0.5 active:translate-y-0"
+            onClick={handleStudentLogin}
+            className="w-full flex items-center justify-center gap-3 py-4 px-4 bg-bone border border-terracotta/10 text-slate hover:bg-gold/20 hover:text-terracotta hover:border-terracotta/30 font-bold rounded-2xl shadow-sm transition active:scale-95"
           >
-            Sign In
+            <BookOpen size={20} strokeWidth={1.5} /> Enter as Student
           </button>
-        </form>
-        <p className="mt-6 text-center text-slate-500 text-sm">
-          Don't have an account? <Link to="/signup" className="text-emerald-600 font-medium hover:underline">Sign Up</Link>
-        </p>
+          <button 
+            onClick={handleMentorLogin}
+            className="w-full flex items-center justify-center gap-3 py-4 px-4 bg-terracotta hover:bg-terracotta/90 text-white font-bold rounded-2xl shadow-warm transition active:scale-95 border border-terracotta/20"
+          >
+            <User size={20} strokeWidth={1.5} /> Enter as Mentor
+          </button>
+        </div>
       </div>
     </div>
   );

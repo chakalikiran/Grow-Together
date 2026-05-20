@@ -1,32 +1,32 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import api from '../api/axios';
-import { BookOpen, Upload, CheckCircle, ArrowLeft } from 'lucide-react';
+import { BookOpen, Plus, X, Clock, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-const Assignments = () => {
+const Sprints = () => {
   const { user } = useContext(AuthContext);
-  const [assignments, setAssignments] = useState([]);
+  const { addToast } = useToast();
+  const [sprints, setSprints] = useState([]);
   
   // Mentor creation state
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [deadline, setDeadline] = useState('');
   const [file, setFile] = useState(null);
-  
-  // Student submission state
-  const [submitFile, setSubmitFile] = useState({});
-  const [loading, setLoading] = useState({});
   const [creationLoading, setCreationLoading] = useState(false);
 
   useEffect(() => {
-    fetchAssignments();
+    fetchSprints();
   }, []);
 
-  const fetchAssignments = async () => {
+  const fetchSprints = async () => {
     try {
       const res = await api.get('/assignments');
-      setAssignments(res.data.assignments || []);
+      const sorted = (res.data.assignments || []).sort((a, b) => new Date(b.createdAt || Date.now()) - new Date(a.createdAt || Date.now()));
+      setSprints(sorted);
     } catch (err) { console.error(err); }
   };
 
@@ -42,109 +42,112 @@ const Assignments = () => {
     try {
       await api.post('/assignments', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       setTitle(''); setDescription(''); setDeadline(''); setFile(null);
-      fetchAssignments();
-    } catch (err) { alert('Failed to create assignment'); }
+      setIsModalOpen(false);
+      addToast('Sprint created successfully!', 'success');
+      fetchSprints();
+    } catch (err) { addToast('Failed to create sprint', 'error'); }
     finally { setCreationLoading(false); }
   };
 
-  const handleSubmit = async (e, assignmentId) => {
-    e.preventDefault();
-    const currFile = submitFile[assignmentId];
-    if (!currFile) return alert("Please select a file to submit!");
-
-    setLoading(prev => ({ ...prev, [assignmentId]: true }));
-    const formData = new FormData();
-    formData.append('file', currFile);
-
-    try {
-      await api.post(`/assignments/${assignmentId}/submit`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-      alert('Assignment submitted successfully!');
-      fetchAssignments();
-    } catch (err) { alert('Submission failed'); }
-    finally { setLoading(prev => ({ ...prev, [assignmentId]: false })); }
-  };
-
   return (
-    <div className="p-8 pt-24 max-w-6xl mx-auto min-h-screen relative">
-      <Link to="/dashboard" className="fixed top-8 left-8 z-50 inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/30 transition transform hover:-translate-y-0.5">
-        <ArrowLeft size={18} /> Back to Dashboard
-      </Link>
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-slate-800">Assignments</h2>
-        <p className="text-slate-500 mt-1">Track deadlines and submissions.</p>
+    <div className="p-8 max-w-[1400px] mx-auto min-h-screen relative space-y-16">
+      <div className="flex justify-between items-end">
+        <div>
+          <h2 className="text-4xl font-bold text-slate tracking-tight">Sprint Gallery</h2>
+          <p className="text-slate/70 mt-2 text-lg">Drill down into your active topics and discussions.</p>
+        </div>
+        {user?.role === 'mentor' && (
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 bg-terracotta text-white px-8 py-4 rounded-[2rem] font-bold shadow-warm-deep hover:bg-terracotta/90 transition active:scale-95"
+          >
+            <Plus size={24} strokeWidth={2} /> New Topic
+          </button>
+        )}
       </div>
 
-      {user?.role === 'mentor' && (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-8">
-          <h3 className="text-lg font-bold text-slate-800 mb-4">Create Assignment</h3>
-          <form onSubmit={handleCreate} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input type="text" placeholder="Title" required className="px-4 py-2 border border-slate-200 rounded-xl w-full" value={title} onChange={e => setTitle(e.target.value)} />
-              <input type="datetime-local" required className="px-4 py-2 border border-slate-200 rounded-xl w-full" value={deadline} onChange={e => setDeadline(e.target.value)} />
+      {/* Creation Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bone/40 backdrop-blur-md p-4">
+          <div className="bg-white/90 backdrop-blur-3xl w-full max-w-2xl rounded-[2.5rem] shadow-warm-deep border border-terracotta/5 overflow-hidden relative">
+            <button onClick={() => setIsModalOpen(false)} className="absolute top-6 right-6 text-slate hover:text-terracotta transition bg-bone rounded-full p-2">
+               <X size={20} strokeWidth={1.5} />
+            </button>
+            <div className="p-10">
+              <h3 className="text-3xl font-bold text-slate mb-8 flex items-center gap-3">
+                <BookOpen className="text-terracotta" strokeWidth={1.5} size={32} /> Initialize Sprint
+              </h3>
+              <form onSubmit={handleCreate} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-bold text-slate mb-2">Topic Focus</label>
+                    <input type="text" placeholder="e.g. Neo-Brutalism" required className="w-full px-5 py-4 border border-terracotta/10 rounded-2xl focus:ring-2 focus:ring-terracotta outline-none transition bg-bone/50 text-slate" value={title} onChange={e => setTitle(e.target.value)} />
+                  </div>
+                  <div>
+                     <label className="block text-sm font-bold text-slate mb-2">Target Date</label>
+                     <input type="datetime-local" required className="w-full px-5 py-4 border border-terracotta/10 rounded-2xl focus:ring-2 focus:ring-terracotta outline-none transition bg-bone/50 text-slate" value={deadline} onChange={e => setDeadline(e.target.value)} />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate mb-2">Brief & Context</label>
+                  <textarea placeholder="Provide the context for this sprint..." required className="w-full px-5 py-4 border border-terracotta/10 rounded-2xl focus:ring-2 focus:ring-terracotta outline-none transition bg-bone/50 min-h-[150px] text-slate resize-none" value={description} onChange={e => setDescription(e.target.value)} />
+                </div>
+                <div>
+                   <label className="block text-sm font-bold text-slate mb-2">Reference Assets</label>
+                   <input type="file" className="text-sm text-slate file:mr-4 file:py-2.5 file:px-6 file:rounded-xl file:border-0 file:font-bold file:bg-gold/20 file:text-terracotta hover:file:bg-gold/30 transition w-full" onChange={e => setFile(e.target.files[0])} />
+                </div>
+                <div className="pt-6 border-t border-terracotta/10 flex justify-end gap-4 mt-8">
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="px-8 py-4 rounded-2xl font-bold text-slate bg-bone hover:bg-gold/20 transition">Cancel</button>
+                  <button type="submit" disabled={creationLoading} className="px-10 py-4 bg-terracotta text-white rounded-2xl font-bold hover:bg-terracotta/90 transition disabled:opacity-50 active:scale-95 shadow-warm-sm">
+                    {creationLoading ? 'Initializing...' : 'Launch Sprint'}
+                  </button>
+                </div>
+              </form>
             </div>
-            <textarea placeholder="Description instructions..." required className="w-full px-4 py-2 border border-slate-200 rounded-xl mt-2" value={description} onChange={e => setDescription(e.target.value)} />
-            <div className="flex items-center gap-4">
-              <input type="file" className="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" onChange={e => setFile(e.target.files[0])} />
-              <button type="submit" disabled={creationLoading} className="px-6 py-2 bg-emerald-500 text-white rounded-xl font-medium hover:bg-emerald-600 transition ml-auto disabled:opacity-50">
-                {creationLoading ? 'Creating...' : 'Publish'}
-              </button>
-            </div>
-          </form>
+          </div>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {assignments.map(a => {
-          const isSubmitted = a.submissions?.some(sub => sub.student._id === user._id || sub.student === user._id);
-          
+      {/* Asymmetrical Bento Gallery */}
+      <div className="grid grid-cols-12 gap-10">
+        {sprints.map(sprint => {
+          const deadlinePassed = new Date(sprint.deadline) < new Date();
+          const feedCount = sprint.feed?.length || 0;
+
           return (
-            <div key={a._id} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center"><BookOpen size={20} /></div>
-                  <h4 className="font-bold text-lg text-slate-800">{a.title}</h4>
+            <Link to={`/assignments/${sprint._id}`} key={sprint._id} className="col-span-12 md:col-span-6 lg:col-span-4 block group">
+              <div className="bg-white/80 backdrop-blur-3xl p-8 rounded-[2.5rem] shadow-warm-deep border border-terracotta/5 h-full flex flex-col justify-between transition-transform duration-300 group-hover:-translate-y-2 group-active:scale-95 relative overflow-hidden">
+                <div className="absolute -top-10 -right-10 w-32 h-32 bg-gold/10 rounded-full blur-xl pointer-events-none group-hover:bg-gold/20 transition-colors"></div>
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    <span className="px-4 py-1.5 bg-bone text-deep-charcoal text-xs font-bold uppercase rounded-full tracking-widest shadow-sm border border-terracotta/5">Sprint</span>
+                    <ArrowRight size={20} className="text-terracotta opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0" />
+                  </div>
+                  <h3 className="text-2xl font-extrabold text-deep-charcoal mb-4 leading-tight line-clamp-2">{sprint.title}</h3>
                 </div>
-                {isSubmitted && user.role === 'student' && <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold flex items-center gap-1"><CheckCircle size={14}/> Submitted</span>}
-              </div>
-              <p className="text-slate-600 text-sm mb-4 line-clamp-2">{a.description}</p>
-              <div className="text-xs text-slate-500 mt-auto mb-4 bg-slate-50 px-3 py-2 rounded-lg inline-block self-start">
-                <strong>Deadline:</strong> {new Date(a.deadline).toLocaleString()}
-              </div>
-              
-              {a.fileUrl && (
-                <a href={a.fileUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-blue-600 hover:underline mb-4 inline-block">
-                  View Reference Resource
-                </a>
-              )}
 
-              {user?.role === 'student' && !isSubmitted && (
-                <form onSubmit={e => handleSubmit(e, a._id)} className="mt-4 pt-4 border-t border-slate-100 flex items-center gap-3">
-                  <input type="file" required onChange={e => setSubmitFile({...submitFile, [a._id]: e.target.files[0]})} className="flex-1 text-sm file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-slate-100 file:text-slate-700" />
-                  <button type="submit" disabled={loading[a._id]} className="px-4 py-1.5 bg-emerald-500 text-white font-medium rounded-lg hover:bg-emerald-600 flex items-center gap-2">
-                    <Upload size={16} /> {loading[a._id] ? 'Sending...' : 'Submit'}
-                  </button>
-                </form>
-              )}
-
-              {user?.role === 'mentor' && (
-                <div className="mt-4 pt-4 border-t border-slate-100">
-                  <p className="text-sm font-medium text-slate-700 mb-2">Submissions ({a.submissions?.length || 0})</p>
-                  <ul className="space-y-2 max-h-32 overflow-y-auto">
-                    {a.submissions?.map(sub => (
-                      <li key={sub._id} className="text-sm flex justify-between items-center bg-slate-50 px-3 py-2 rounded-lg">
-                        <span>{sub.student?.name || 'Student'}</span>
-                        <a href={sub.submissionUrl} target="_blank" rel="noopener noreferrer" className="text-emerald-600 hover:underline">View Work</a>
-                      </li>
-                    ))}
-                  </ul>
+                <div className="mt-8 space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-bone/50 rounded-2xl border border-terracotta/5">
+                    <span className="text-deep-charcoal/80 text-sm font-semibold flex items-center gap-2"><Clock size={16} /> Deadline</span>
+                    <span className={`text-sm font-bold ${deadlinePassed ? 'text-terracotta' : 'text-deep-charcoal'}`}>{new Date(sprint.deadline).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-gold/10 rounded-2xl border border-gold/20">
+                    <span className="text-deep-charcoal/90 text-sm font-semibold">Squad Feed</span>
+                    <span className="text-terracotta font-bold text-sm bg-white px-3 py-1 rounded-full shadow-sm">{feedCount} Updates</span>
+                  </div>
                 </div>
-              )}
-            </div>
+              </div>
+            </Link>
           );
         })}
+        {sprints.length === 0 && (
+          <div className="col-span-12 text-center py-20 text-slate/50 font-bold text-xl">
+            No sprints available yet.
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-export default Assignments;
+export default Sprints;

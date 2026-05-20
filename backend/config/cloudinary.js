@@ -5,20 +5,40 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+let storage;
 
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'grow_together',
-    allowed_formats: ['jpg', 'png', 'pdf', 'docx', 'txt', 'zip', 'mp4', 'mkv', 'webm', 'mov'],
-    resource_type: 'auto'
-  },
-});
+if (process.env.CLOUDINARY_CLOUD_NAME) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+
+  storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+      folder: 'grow_together',
+      allowed_formats: ['jpg', 'png', 'pdf', 'docx', 'txt', 'zip', 'mp4', 'mkv', 'webm', 'mov'],
+      resource_type: 'auto'
+    },
+  });
+} else {
+  const fs = require('fs');
+  const path = require('path');
+  const uploadDir = path.join(__dirname, '..', 'uploads');
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+
+  storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+      cb(null, Date.now() + '-' + file.originalname);
+    }
+  });
+}
 
 const upload = multer({ storage: storage });
 

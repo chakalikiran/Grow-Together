@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import api from '../api/axios';
-import { FileText, UploadCloud, Download, ArrowLeft } from 'lucide-react';
+import { FileText, UploadCloud, Download } from 'lucide-react';
 
 const Notes = () => {
   const { user } = useContext(AuthContext);
+  const { addToast } = useToast();
   const [notes, setNotes] = useState([]);
   const [title, setTitle] = useState('');
   const [subject, setSubject] = useState('');
@@ -27,7 +28,7 @@ const Notes = () => {
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!file) return alert("Please select a file.");
+    if (!file) return addToast("Please select a file.", "error");
     
     setLoading(true);
     const formData = new FormData();
@@ -42,51 +43,56 @@ const Notes = () => {
       setTitle('');
       setSubject('');
       setFile(null);
+      addToast('Note uploaded successfully!', 'success');
       fetchNotes();
     } catch (err) {
       console.error(err);
-      alert('Upload failed');
+      addToast('Upload failed', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="p-8 pt-24 max-w-6xl mx-auto min-h-screen relative">
-      <Link to="/dashboard" className="fixed top-8 left-8 z-50 inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/30 transition transform hover:-translate-y-0.5">
-        <ArrowLeft size={18} /> Back to Dashboard
-      </Link>
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h2 className="text-3xl font-bold text-slate-800">Class Notes</h2>
-          <p className="text-slate-500 mt-1">Access study materials and resources.</p>
-        </div>
+    <div className="p-8 max-w-7xl mx-auto space-y-6">
+      <div className="mb-8">
+        <h2 className="text-4xl font-bold text-slate tracking-tight">Resource Gallery</h2>
+        <p className="text-slate/70 mt-2 text-lg">Access study materials and essential resources.</p>
       </div>
 
       {user?.role === 'mentor' && (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-8">
-          <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <UploadCloud className="text-emerald-500" /> Upload New Note
+        <div className="bg-white/80 backdrop-blur-2xl p-8 rounded-[2rem] shadow-warm border border-terracotta/10 mb-8">
+          <h3 className="text-xl font-bold text-slate mb-6 flex items-center gap-2">
+            <UploadCloud className="text-terracotta" strokeWidth={1.5} /> Upload New Note
           </h3>
-          <form onSubmit={handleUpload} className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <input 
-              type="text" placeholder="Note Title" required 
-              className="px-4 py-2 border border-slate-200 rounded-xl"
-              value={title} onChange={e => setTitle(e.target.value)}
-            />
-            <input 
-              type="text" placeholder="Subject" required 
-              className="px-4 py-2 border border-slate-200 rounded-xl"
-              value={subject} onChange={e => setSubject(e.target.value)}
-            />
-            <input 
-              type="file" required 
-              className="px-4 py-2 border border-slate-200 rounded-xl text-sm"
-              onChange={e => setFile(e.target.files[0])}
-            />
+          <form onSubmit={handleUpload} className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+            <div className="relative flex flex-col gap-1 w-full">
+              <label className="text-xs font-bold text-slate/80 px-1 uppercase tracking-wider">Note Title</label>
+              <input 
+                type="text" placeholder="e.g. Tactile Bento Systems" required 
+                className="px-5 py-3 border border-terracotta/10 rounded-2xl focus:ring-2 focus:ring-terracotta outline-none transition bg-white/50 w-full"
+                value={title} onChange={e => setTitle(e.target.value)}
+              />
+            </div>
+            <div className="relative flex flex-col gap-1 w-full">
+              <label className="text-xs font-bold text-slate/80 px-1 uppercase tracking-wider">Subject</label>
+              <input 
+                type="text" placeholder="e.g. Design Systems" required 
+                className="px-5 py-3 border border-terracotta/10 rounded-2xl focus:ring-2 focus:ring-terracotta outline-none transition bg-white/50 w-full"
+                value={subject} onChange={e => setSubject(e.target.value)}
+              />
+            </div>
+            <div className="relative flex flex-col gap-1 w-full">
+              <label className="text-xs font-bold text-slate/80 px-1 uppercase tracking-wider">File Asset</label>
+              <input 
+                type="file" required 
+                className="px-5 py-3 border border-terracotta/10 rounded-2xl text-sm file:mr-4 file:py-1 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-gold/20 file:text-terracotta hover:file:bg-gold/30 transition bg-white/50 w-full"
+                onChange={e => setFile(e.target.files[0])}
+              />
+            </div>
             <button 
               type="submit" disabled={loading}
-              className="px-4 py-2 bg-emerald-500 text-white rounded-xl font-medium hover:bg-emerald-600 transition disabled:opacity-50"
+              className="w-full px-5 py-[14px] bg-terracotta text-white rounded-2xl font-bold hover:bg-terracotta/90 transition active:scale-95 disabled:opacity-50 shadow-warm-sm"
             >
               {loading ? 'Uploading...' : 'Publish Note'}
             </button>
@@ -94,35 +100,39 @@ const Notes = () => {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        {notes.length === 0 ? (
-          <div className="p-8 text-center text-slate-500">No notes found.</div>
-        ) : (
-          <ul className="divide-y divide-slate-100">
-            {notes.map(note => (
-              <li key={note._id} className="p-6 flex items-center justify-between hover:bg-slate-50 transition">
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
-                    <FileText size={24} />
+      {notes.length === 0 ? (
+        <div className="p-12 text-center text-slate/70 bg-white/50 backdrop-blur-md rounded-[2rem] border border-terracotta/10 border-dashed">
+          No resources found.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {notes.map(note => (
+            <div key={note._id} className="bg-white/80 backdrop-blur-2xl p-6 rounded-[2rem] shadow-warm-sm border border-terracotta/10 flex flex-col justify-between hover:shadow-warm transition group">
+              <div>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="h-14 w-14 bg-bone text-terracotta rounded-2xl flex items-center justify-center group-hover:bg-gold/20 transition border border-terracotta/5">
+                    <FileText size={28} strokeWidth={1.5} />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-slate-800 text-lg">{note.title}</h4>
-                    <p className="text-sm text-slate-500">
-                      Subject: {note.subject} • By {note.mentor?.name} • {new Date(note.createdAt).toLocaleDateString()}
-                    </p>
+                    <h4 className="font-bold text-slate text-lg line-clamp-1">{note.title}</h4>
+                    <p className="text-sm font-bold text-terracotta/80">{note.subject}</p>
                   </div>
                 </div>
-                <a 
-                  href={note.fileUrl} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 font-medium rounded-lg hover:bg-slate-200 transition"
-                >
-                  <Download size={18} /> View / Download
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+                <div className="text-sm text-slate/80 mb-6 bg-bone/50 p-4 rounded-2xl border border-terracotta/5">
+                   <span className="block mb-1"><strong>Uploaded by:</strong> {note.mentor?.name}</span>
+                   <span className="block"><strong>Date:</strong> {new Date(note.createdAt).toLocaleDateString()}</span>
+                </div>
+              </div>
+              <a 
+                href={note.fileUrl} target="_blank" rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 px-4 py-3 bg-bone text-terracotta font-bold rounded-2xl hover:bg-terracotta hover:text-white transition active:scale-95 border border-terracotta/5"
+              >
+                <Download size={18} strokeWidth={1.5} /> View Resource
+              </a>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
